@@ -64,8 +64,8 @@ module Axlsx
         p = options.delete(:package) || Package.new
         row_style = p.workbook.styles.add_style(row_style) unless row_style.nil?
         header_style = p.workbook.styles.add_style(header_style) unless header_style.nil?
-        i18n = self.xlsx_i18n == true ? 'activerecord.attributes' : i18n
-        sheet_name = options.delete(:name) || (i18n ? (self.xlsx_i18n == true ? self.model_name.human : I18n.t("#{i18n}.#{table_name.underscore}", default: table_name.humanize)) : table_name.humanize)
+        i18n_key = i18n == true ? 'activerecord.attributes' : i18n
+        sheet_name = options.delete(:name) || (i18n ? (i18n == true ? self.model_name.human : I18n.t("#{i18n_key}.#{table_name.underscore}", default: table_name.humanize)) : table_name.humanize)
         data = options.delete(:data) || where(options[:where]).order(options[:order]).to_a
         data = data.compact.flatten
 
@@ -74,7 +74,7 @@ module Axlsx
         p.workbook.add_worksheet(:name=>sheet_name) do |sheet|
           
           col_labels = if i18n
-                         columns.map { |c| self.xlsx_i18n == true ? self.human_attribute_name(c) : I18n.t("#{i18n}.#{self.name.underscore}.#{c}", default: c.to_s.humanize) }
+                         columns.map { |c| i18n == true ? self.human_attribute_name(c) : I18n.t("#{i18n_key}.#{self.name.underscore}.#{c}", default: c.to_s.humanize) }
                        else
                          columns.map { |c| c.to_s.humanize }
                        end
