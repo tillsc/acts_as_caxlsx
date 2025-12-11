@@ -54,7 +54,11 @@ module Axlsx
         header_style = options.delete(:header_style) || row_style
         types = [options.delete(:types) || []].flatten
 
-        i18n = options.delete(:i18n) || self.xlsx_i18n
+        i18n = if options.key?(:i18n)
+                 options.delete(:i18n)
+               else
+                 self.xlsx_i18n
+               end
         columns = options.delete(:columns) || self.xlsx_columns
 
         p = options.delete(:package) || Package.new
