@@ -59,7 +59,24 @@ module Axlsx
                else
                  self.xlsx_i18n
                end
-        columns = options.delete(:columns) || self.xlsx_columns
+
+        # columns => [["column_name", "header"], [...], ...]
+        columns = Array.wrap(options.delete(:columns) || self.xlsx_columns).flat_map { |col|
+          col.is_a?(Hash) ? col.to_a : [[col, nil]]
+        }
+
+        headers = options.delete(:headers)
+        headers||= columns.map { |(col_name, col_header)|
+          if col_header
+            col_header
+          elsif i18n == true
+            self.human_attribute_name(col_name)
+          elsif i18n
+            I18n.t("#{i18n_key}.#{self.name.underscore}.#{col_name}", default: col_name.to_s.humanize)
+          else
+            col_name.to_s.humanize
+          end
+        }
 
         p = options.delete(:package) || Package.new
         row_style = p.workbook.styles.add_style(row_style) unless row_style.nil?
@@ -72,22 +89,15 @@ module Axlsx
 
         return p if data.empty?
         p.workbook.add_worksheet(:name=>sheet_name) do |sheet|
-          
-          col_labels = if i18n
-                         columns.map { |c| i18n == true ? self.human_attribute_name(c) : I18n.t("#{i18n_key}.#{self.name.underscore}.#{c}", default: c.to_s.humanize) }
-                       else
-                         columns.map { |c| c.to_s.humanize }
-                       end
-          
-          sheet.add_row col_labels, :style=>header_style
+          sheet.add_row headers, :style=>header_style
           
           data.each do |r|
-            row_data = columns.map do |c|
-              if c.to_s =~ /\./
-                v = r; c.to_s.split('.').each { |method| !v.nil? ? v = v.send(method) : v = ""; }; v
-              else
-                r.send(c)                
+            row_data = columns.map do |(column_name, _column_header)|
+              v = r
+              column_name.to_s.split('.').each do |method|
+                !v.nil? ? v = v.send(method) : v = nil
               end
+              v
             end
             sheet.add_row row_data, :style=>row_style, :types=>types
           end

@@ -70,7 +70,14 @@ class TestToXlsx < Test::Unit::TestCase
     assert_equal(Post.last.comments.last.author.name, sheet.rows.last.cells.last.value)
   end
 
-  
+  def test_complex_columns
+    p = Post.to_xlsx columns: [{name: "CUSTOM NAME HEADER", votes: "CUSTOM VOTES HEADER"}, :content, ranking: "CUSTOM RANKING HEADER"]
+    sheet = p.workbook.worksheets.first
+    assert_equal("CUSTOM NAME HEADER", sheet.rows.first.cells[0].value)
+    assert_equal("CUSTOM VOTES HEADER", sheet.rows.first.cells[1].value)
+    assert_equal("Content", sheet.rows.first.cells[2].value)
+    assert_equal("CUSTOM RANKING HEADER", sheet.rows.first.cells[3].value)
+  end
   
 end
 
